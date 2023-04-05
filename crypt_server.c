@@ -14,6 +14,7 @@ If compiling on Windows link -lws2_32
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #endif
 #include <stdio.h>
@@ -76,5 +77,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed in socket creation: %d\n", GET_SOCKET_ERR());
     }
     printf("Successful.\n");
+
+
+
     return 1;
 }

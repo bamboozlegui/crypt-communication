@@ -19,7 +19,7 @@ Description: Navigate in the maze and don't get caught
 #include <string.h>
 #include <unistd.h>  
 
-int main(int argc, char* argc[])
+int main(int argc, char* argv[])
 {
 	return 1;
 }

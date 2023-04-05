@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 #define ISVALIDSOCKET(s) ((s) != INVALID_SOCKET)
 #define GETSOCKETERRNO() (WSAGetLastError())
 #else
-    SOCKET int // Winsock uses SOCKET object
+#define    SOCKET int // Winsock uses SOCKET object
     ISVALIDSOCKET(s) ((s) >= 0)
     GETSOCKETERRNO() (errno)
 #endif

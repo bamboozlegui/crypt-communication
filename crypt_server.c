@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     struct sockaddr_in client_address;
     char buffer[1024];
 
-    int c_address_length;
+    int client_addr_length = sizeof(struct sockaddr);
 
     int pub_key;
     int priv_key;
@@ -100,7 +100,19 @@ int main(int argc, char* argv[])
     }
     printf("Binded!\n");
 
-    
+    printf("Initialize queue of %s for listening...", 5);
+    listen(listen_socket, 5);
+    if(listen_socket)
+
+    for (;;)
+    {
+        memset(&client_addrress, 0, sizeof(client_address));
+        memset(&buffer, 0, sizeof(buffer));
+
+        if(accept_socket = accept(listen_socket,
+            (struct sockaddr*)&client_address, &client_addr_length))
+
+    } 
 
     return 1;
 }
@@ -109,9 +121,10 @@ int main(int argc, char* argv[])
 
 /*
 TO-DO
-    INVALID_SOCKET is only on socket() call for Windows. Fix error check logic
+    INVALID_SOCKET is only on socket() and accept() call for Windows. Fix error check logic
     other functions should return SOCKET_ERROR(-1), unix also >0. Use that
     WSAGetLastError() returns both INVALID_SOCKET && SOCKET_ERROR specific error codes
     need to revamp logic for that
-
+    bind() returns SOCKET_ERROR
+    WSACleanup()????
 */

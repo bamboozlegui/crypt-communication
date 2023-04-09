@@ -9,12 +9,20 @@ If compiling on Windows link -lws2_32
 
 #ifdef _WIN32
 #include <winsock2.h>
+#define socklen_t int
+#define IS_VALID_SOCKET(s) ((s) != INVALID_SOCKET)
+#define GET_SOCKET_ERR() (WSAGetLastError())
+#define CLOSE_SOCKET(s) closesocket(s)
 #else
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#define SOCKET int
+#define IS_VALID_SOCKET(s) ((s) >= 0)
+#define GET_SOCKET_ERR() (errno)
+#define CLOSE_SOCKET(s) close(s)
 
 #endif
 #include <stdio.h>
@@ -26,25 +34,17 @@ int main(int argc, char* argv[])
 {
 #ifdef _WIN32
     WSADATA wsa;
-#define IS_VALID_SOCKET(s) ((s) != INVALID_SOCKET)
-#define GET_SOCKET_ERR() (WSAGetLastError())
-#define CLOSE_SOCKET(s) closesocket(s)
-#else
-#define SOCKET int
-#define IS_VALID_SOCKET(s) ((s) >= 0)
-#define GET_SOCKET_ERR() (errno)
-#define CLOSE_SOCKET(s) close(s)
 #endif
 
     SOCKET listen_socket;
     SOCKET accept_socket;
-    unsigned int port;
+    unsigned short port;
 
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
     char buffer[1024];
 
-    int client_addr_length = sizeof(struct sockaddr);
+    socklen_t client_addr_length;
 
     int pub_key;
     int priv_key;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     listen_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (!IS_VALID_SOCKET(listen_socket))
     {
-        fprintf(stderr, "Failed in socket creation. Error: %d\n", GET_SOCKET_ERR());
+        fprintf(stderr, "Failed while creating socket. Error: %d\n", GET_SOCKET_ERR());
     }
     printf("Successful!\n");
 
@@ -93,25 +93,31 @@ int main(int argc, char* argv[])
     // set port
     server_address.sin_port = htons(port);
 
-    printf("Binding to socket...\n");
+    printf("Binding to socket...\n"); 
     if (bind(listen_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
-        fprintf(stderr, "Failed in binding socket. Error: ", GET_SOCKET_ERR());
+        fprintf(stderr, "Failed while binding socket. Error: ", GET_SOCKET_ERR());
         exit(1);
     }
     printf("Binded!\n");
 
-    printf("Initialize queue of %s for listening...", 5);
+    printf("Start listening...", 5);
     listen(listen_socket, 5);
-    if(listen_socket)
+    if (!IS_VALID_SOCKET(listen_socket))
+    {
+        fprintf(stderr, "Failed while creating listen socket. Error: %d\n", GET_SOCKET_ERR());
+    }
 
     for (;;)
     {
         memset(&client_addrress, 0, sizeof(client_address));
         memset(&buffer, 0, sizeof(buffer));
 
-        if(accept_socket = accept(listen_socket,
-            (struct sockaddr*)&client_address, &client_addr_length))
-
+        printf("Waiting for client to connect...");
+        accept_socket = accept(listen_socket, (struct sockaddr*)&client_address, &client_addr_length);
+        if (!IS_VALID_SOCKET(accept_socket))
+        {
+            fprintf(stderr, "Failed while accepting socket. Error: %d\n", GET_SOCKET_ERR());
+        }
     } 
 
     return 1;

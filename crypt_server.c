@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 
     for (;;)
     {
-        memset(&client_addrress, 0, sizeof(client_address));
+        memset(&client_address, 0, sizeof(client_address));
         memset(&buffer, 0, sizeof(buffer));
 
         printf("Waiting for client to connect...");

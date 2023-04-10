@@ -37,7 +37,7 @@ If compiling on Windows link -lws2_32
 #define MAX_PASS_LENGTH 256
 #define BUFF_LENGTH 1024
 
-char* generate_pass(int n);
+char* generate_pass(int n, char* pass);
 void parse_buffer(char* buffer, int* pass_length, char key[]);
 
 int main(int argc, char* argv[])
@@ -61,9 +61,9 @@ int main(int argc, char* argv[])
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
     char buffer[BUFF_LENGTH];
-    char* data;
     char key[9];
     int pass_length;
+    char pass[256];
     memset(key, 0, sizeof(key));
     
     socklen_t client_addr_length = sizeof(struct sockaddr);
@@ -143,17 +143,20 @@ int main(int argc, char* argv[])
     return 1;
 }
 
-char* generate_pass(int n)
+char* generate_pass(int n, char* pass)
 {
-    return "1234567";
-    char chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
-    char password[n + 1];
-    srand(time(NULL)); // seed for random number generator
+    
+    char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
+    //char pass[n + 1];
+    srand(time(NULL)); // seed for pseudo-random number generator
     
     for (int i = 0; i < n; ++i)
     {
-
+        pass[i] = chars[rand() % sizeof(chars) - 1]; // select random character
     }
+    pass[n] = '\0';
+
+    return pass;
 }
 
 char* encrypt_message(char* message, int length)
@@ -174,16 +177,3 @@ void parse_buffer(char* buffer, int* pass_length, char key[])
     printf("%s", key);
     token = strtok(NULL, " ");
 }
-
-
-
-
-/*
-TO-DO
-    INVALID_SOCKET is only on socket() and accept() call for Windows. Fix error check logic
-    other functions should return SOCKET_ERROR(-1), unix also >0. Use that
-    WSAGetLastError() returns both INVALID_SOCKET && SOCKET_ERROR specific error codes
-    need to revamp logic for that
-    bind() returns SOCKET_ERROR
-    WSACleanup()????
-*/

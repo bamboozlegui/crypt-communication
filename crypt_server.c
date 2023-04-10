@@ -9,6 +9,7 @@ If compiling on Windows link -lws2_32
 
 #ifdef _WIN32
 #include <winsock2.h>
+
 #define socklen_t int
 #define IS_VALID_SOCKET(s) ((s) != (SOCKET_ERROR || INVALID_SOCKET))
 #define GET_SOCKET_ERR() (WSAGetLastError())
@@ -19,6 +20,7 @@ If compiling on Windows link -lws2_32
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+
 #define SOCKET int
 #define IS_VALID_SOCKET(s) ((s) >= 0)
 #define GET_SOCKET_ERR() (errno)
@@ -29,6 +31,14 @@ If compiling on Windows link -lws2_32
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>   
+#include <time.h>
+
+#define KEY_LENGTH 9
+#define MAX_PASS_LENGTH 256
+#define BUFF_LENGTH 1024
+
+char* generate_pass(int n);
+void parse_buffer(char* buffer, int* pass_length, char key[]);
 
 int main(int argc, char* argv[])
 {
@@ -46,16 +56,17 @@ int main(int argc, char* argv[])
 
     SOCKET listen_socket;
     SOCKET accept_socket;
-    unsigned short port;
+    unsigned int port;
 
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
-    char buffer[1024];
-
+    char buffer[BUFF_LENGTH];
+    char* data;
+    char key[9];
+    int pass_length;
+    memset(key, 0, sizeof(key));
+    
     socklen_t client_addr_length = sizeof(struct sockaddr);
-
-    int pub_key;
-    int priv_key;
 
     printf("Validating port...\n");
     if (argc != 2)
@@ -98,28 +109,72 @@ int main(int argc, char* argv[])
     }
     printf("Binded!\n");
 
-    printf("Start listening...");
+    printf("Start listening...\n");
     listen(listen_socket, 5);
     if (!IS_VALID_SOCKET(listen_socket))
     {
         fprintf(stderr, "Failed while creating listen socket. Error: %d\n", GET_SOCKET_ERR());
     }
-
-    for (;;)
+    printf("Start accepting...\n");
+    int r = 0;
+    for(;;)
     {
+        // clear buffer and client address struct
         memset(&client_address, 0, sizeof(client_address));
-        memset(&buffer, 0, sizeof(buffer));
+        memset(&buffer, 0, BUFF_LENGTH);
 
-        
+        // wait for client to connect
         accept_socket = accept(listen_socket, (struct sockaddr*)&client_address, &client_addr_length);
         if(!IS_VALID_SOCKET(accept_socket))
         {
-            fprintf(stderr, "Failed while accepting socket. Error: %d\n", GET_SOCKET_ERR());
+            fprintf(stderr, "Failed while accepting socket. Error: %s\n", strerror(GET_SOCKET_ERR()));
+            exit(-1);
         }
+        
+        // get key
+        r = recv(accept_socket, buffer, sizeof(buffer), 0);
+        printf("Received buffer: %s\n", buffer);
+
+        // send data to client
+        send(accept_socket, buffer, strlen(buffer), 0);
+        CLOSE_SOCKET(accept_socket);
     }
 
     return 1;
 }
+
+char* generate_pass(int n)
+{
+    return "1234567";
+    char chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
+    char password[n + 1];
+    srand(time(NULL)); // seed for random number generator
+    
+    for (int i = 0; i < n; ++i)
+    {
+
+    }
+}
+
+char* encrypt_message(char* message, int length)
+{
+    for (int i = 0; i < length; i++)
+    {
+        message[0] += 2;
+    }
+}
+
+void parse_buffer(char* buffer, int* pass_length, char key[])
+{
+    char* token = strtok(buffer, " ");
+
+    *pass_length = atoi(token);
+    token = strtok(NULL, " ");
+    key = token;
+    printf("%s", key);
+    token = strtok(NULL, " ");
+}
+
 
 
 

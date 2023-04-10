@@ -34,6 +34,14 @@ int main(int argc, char* argv[])
 {
 #ifdef _WIN32
     WSADATA wsa;
+
+    printf("Initialising Winsock... \n");
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+    {
+        printf("Unsuccessful. Error: %d\n", WSAGetLastError());
+        exit(-1);
+    }
+    printf("Successful!\n");
 #endif
 
     SOCKET listen_socket;
@@ -44,7 +52,7 @@ int main(int argc, char* argv[])
     struct sockaddr_in client_address;
     char buffer[1024];
 
-    socklen_t client_addr_length;
+    socklen_t client_addr_length = sizeof(struct sockaddr);
 
     int pub_key;
     int priv_key;
@@ -64,16 +72,6 @@ int main(int argc, char* argv[])
         printf("Port number out of range. Allowed: [1,65535]");
         exit(-1);
     }
-
-#ifdef _WIN32
-    printf("Initialising Winsock... \n");
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-    {
-        printf("Unsuccessful. Error: %d\n", WSAGetLastError());
-        exit(-1);
-    }
-    printf("Successful!\n");
-#endif
 
     // create server socket
     printf("Creating socket...\n");
@@ -95,12 +93,12 @@ int main(int argc, char* argv[])
 
     printf("Binding to socket...\n"); 
     if (bind(listen_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
-        fprintf(stderr, "Failed while binding socket. Error: ", GET_SOCKET_ERR());
+        fprintf(stderr, "Failed while binding socket. Error: %d", GET_SOCKET_ERR());
         exit(1);
     }
     printf("Binded!\n");
 
-    printf("Start listening...", 5);
+    printf("Start listening...");
     listen(listen_socket, 5);
     if (!IS_VALID_SOCKET(listen_socket))
     {
@@ -112,13 +110,13 @@ int main(int argc, char* argv[])
         memset(&client_address, 0, sizeof(client_address));
         memset(&buffer, 0, sizeof(buffer));
 
-        printf("Waiting for client to connect...");
+        
         accept_socket = accept(listen_socket, (struct sockaddr*)&client_address, &client_addr_length);
-        if (!IS_VALID_SOCKET(accept_socket))
+        if(!IS_VALID_SOCKET(accept_socket))
         {
             fprintf(stderr, "Failed while accepting socket. Error: %d\n", GET_SOCKET_ERR());
         }
-    } 
+    }
 
     return 1;
 }

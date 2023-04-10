@@ -10,7 +10,7 @@ If compiling on Windows link -lws2_32
 #ifdef _WIN32
 #include <winsock2.h>
 #define socklen_t int
-#define IS_VALID_SOCKET(s) ((s) != INVALID_SOCKET)
+#define IS_VALID_SOCKET(s) ((s) != (SOCKET_ERROR || INVALID_SOCKET))
 #define GET_SOCKET_ERR() (WSAGetLastError())
 #define CLOSE_SOCKET(s) closesocket(s)
 #else

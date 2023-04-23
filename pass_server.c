@@ -1,11 +1,3 @@
-/*
-Author: Me
-Description: A password generator
-
-If compiling on Windows link -lws2_32
-*/
-
-
 #ifdef _WIN32
 #include <winsock2.h>
 
@@ -58,6 +50,8 @@ int main(int argc, char* argv[])
 
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
+    socklen_t client_addr_length = sizeof(struct sockaddr);
+
 
     char buffer[BUFF_LENGTH];
     int pass_count;
@@ -65,23 +59,24 @@ int main(int argc, char* argv[])
     char pass[256];
     srand(time(NULL)); // seed for pseudo-random number generations
 
-    socklen_t client_addr_length = sizeof(struct sockaddr);
 
-    printf("Validating port...\n");
+    printf("Validating arguments...\n");
     if (argc != 2)
     {
         printf("Missing arguments: %s <port>\n", argv[0]);
         exit(-1);
     }
-    printf("Port validated!\n");
+    printf("Arguments passed!\n");
 
     port = atoi(argv[1]);
 
+    printf("Validating connection port...\n");
     if (port < 1 || port > 65535)
     {
         printf("Port number out of range. Allowed: [1,65535]");
         exit(-1);
     }
+    printf("Connection port validated!\n");
 
     printf("Creating socket...\n");
     listen_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -93,7 +88,8 @@ int main(int argc, char* argv[])
 
     // clear socket memory and fill with addr struct
     memset(&server_address, 0, sizeof(server_address));
-    // set protocol, address (to all network interfaces), port
+
+    // set protocol, address(to all network interfaces), port
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
     server_address.sin_port = htons(port);
@@ -129,28 +125,39 @@ int main(int argc, char* argv[])
         }
         printf("Peer connected.\n");
 
-        // get password length and count from client
+        // #1 get password lengt and count from client
         recv(accept_socket, buffer, sizeof(buffer), 0);
         printf("Received password length and count: %s\n", buffer);
+
         parse_buffer(buffer, &pass_length, &pass_count);
         printf("Parsed length and count: %i and %i\n", pass_length, pass_count);
 
-        if (pass_length > 21 || pass_count > 21)
+        if (pass_length > 20 || pass_count > 20)
         {
-            send(accept_socket, "Max value for password length or count exceeded.", 49, 0);
-            CLOSE_SOCKET(accept_socket);
+            // #2 send info about password validity
+            printf("Password arguments are out of bound.\n");
+            strncpy(buffer, "Max value for password length or count exceeded. Length and count are set to 20.\n", 82);
+            send(accept_socket, buffer, strlen(buffer), 0);
+
+            pass_length = 20;
+            pass_count = 20;
         }
         else
-            send(accept_socket, "Input is valid!", 16, 0);
+        {
+            strncpy(buffer, "Password arguments are valid.\n", 31);
+            send(accept_socket, buffer, 31, 0);
+        }
 
-        //memset(&buffer, 0, BUFF_LENGTH);
-        // convert to int and send password count to the client
+        // #3 convert send password count
         sprintf(buffer, "%i", pass_count);
         send(accept_socket, buffer, strlen(buffer), 0);
+
+        printf("Here are your passwords:\n");
         for (int i = 0; i < pass_count; ++i)
         {
+            // #4 send passwords
             generate_pass(pass_length, pass);
-            printf("Generating pass #%i.... %s\n", i+1, pass);
+            printf("Generating pass #%i.... %s\n", i + 1, pass);
             send(accept_socket, pass, pass_length, 0);
         }
 
@@ -161,7 +168,6 @@ int main(int argc, char* argv[])
     return 1;
 }
 
-// function for generating pseudo-random password
 char* generate_pass(int n, char* pass)
 {
     char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";

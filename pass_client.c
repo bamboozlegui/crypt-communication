@@ -91,9 +91,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed while connecting to server: %d\n", GET_SOCKET_ERR());
         exit(-1);
     }
-
-    while (IS_VALID_SOCKET(server_socket) > 0)
-    {
+    
     printf("Enter password length and the amount separated by a space (MAX 20 for each value): ");
     fgets(buffer, 1024, stdin);
     // #1 send pass count andl length to server
@@ -103,7 +101,9 @@ int main(int argc, char* argv[])
     printf("Checking input validity...\n");
     // #2 check server response for validity
     recv(server_socket, buffer, sizeof(buffer), 0);
+
         printf("%s", buffer);
+
 
     // #3 get pass count
     recv(server_socket, buffer, sizeof(buffer), 0);
@@ -117,10 +117,12 @@ int main(int argc, char* argv[])
         printf("Pass %i: %s\n", i + 1, buffer);
         memset(&buffer, 0, 1024);
     }
+
         printf("\n%i\n", server_socket);
         CLOSE_SOCKET(server_socket);
         printf("\n%i\n", server_socket);
     }
+
 
     CLOSE_SOCKET(server_socket);
  

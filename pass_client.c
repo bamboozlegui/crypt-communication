@@ -1,14 +1,7 @@
-/*
-
-Author: me
-Description: Navigate in the maze and don't get caught
-*/
-
-
 #ifdef _WIN32
 #include <winsock2.h>
 #define socklen_t int
-#define IS_VALID_SOCKET(s) ((s) != INVALID_SOCKET)
+#define IS_VALID_SOCKET(s) ((s) != (SOCKET_ERROR || INVALID_SOCKET))
 #define GET_SOCKET_ERR() (WSAGetLastError())
 #define CLOSE_SOCKET(s) closesocket(s)
 #else
@@ -25,12 +18,12 @@ Description: Navigate in the maze and don't get caught
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>  
+#include <unistd.h>
 
 int main(int argc, char* argv[])
 {
 #ifdef _WIN32
-	WSADATA wsa;
+    WSADATA wsa;
 
     printf("Initialising Winsock... \n");
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -41,17 +34,21 @@ int main(int argc, char* argv[])
     printf("Successful!\n");
 #endif
 
-	unsigned short port;
-    SOCKET listen_socket;
-    struct sockaddr_in server_address;
-    char buffer[1024];
+    SOCKET server_socket;
+    unsigned int port;
 
-    if (argc != 3) {
+    struct sockaddr_in server_address;
+
+    char buffer[1024];
+    int pass_count;
+
+    if (argc != 3)
+    {
         fprintf(stderr, "Missing arguments: %s <ip> <port>", argv[0]);
         exit(-1);
     }
 
-    port atoi(argv[2]);
+    port = atoi(argv[2]);
 
     if (port < 1 || port > 65535)
     {
@@ -59,16 +56,67 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    // create socket
     printf("Creating socket...\n");
-    listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (!IS_VALID_SOCKET(listen_socket))
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (!IS_VALID_SOCKET(server_socket))
     {
         fprintf(stderr, "Failed while creating socket. Error: %d\n", GET_SOCKET_ERR());
     }
     printf("Successful!\n");
 
+    // clear socket memory and fill with addr struct
+    memset(&server_address, 0, sizeof(server_address));
+    // set protocol(IPv4) and port
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
 
-	
-	return 1;
+#ifdef _WIN32
+    server_address.sin_addr.s_addr = inet_addr(argv[1]);
+    if (server_address.sin_addr.s_addr == INADDR_NONE) // wrong format address returns INADDR_NONE on winsock2
+    {
+        fprintf(stderr, "Invalid server IP address.\n");
+        exit(-1);
+    }
+#else
+    if (inet_aton(argv[1], &server_address.sin_addr) <= 0) {
+        fprintf(stderr, "Invalid server IP address.\n");
+        exit(-1);
+    }
+#endif
+
+    printf("Connecting to server...\n");
+    int i_result = connect(server_socket, (struct sockaddr*)&server_address, sizeof(server_address));
+    if (!IS_VALID_SOCKET(i_result))
+    {
+        fprintf(stderr, "Failed while connecting to server: %d\n", GET_SOCKET_ERR());
+        exit(-1);
+    }
+
+    printf("Enter password length and the amount separated by a space (MAX 20 for each value): ");
+    fgets(buffer, 1024, stdin);
+    // #1 send pass count andl length to server
+    send(server_socket, buffer, strlen(buffer), 0);
+
+
+    printf("Checking input validity...\n");
+    // #2 check server response for validity
+    recv(server_socket, buffer, sizeof(buffer), 0);
+    printf(buffer);
+
+    // #3 get pass count
+    recv(server_socket, buffer, sizeof(buffer), 0);
+    pass_count = atoi(buffer);
+
+    memset(&buffer, 0, 1024);
+    for (int i = 0; i < pass_count; ++i)
+    {
+        // #4 get passwords
+        recv(server_socket, buffer, sizeof(buffer), 0);
+        printf("Pass %i: %s\n", i + 1, buffer);
+        memset(&buffer, 0, 1024);
+    }
+
+    CLOSE_SOCKET(server_socket);
+ 
+    return 1;
 }

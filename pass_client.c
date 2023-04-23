@@ -118,13 +118,9 @@ int main(int argc, char* argv[])
         memset(&buffer, 0, 1024);
     }
 
-        printf("\n%i\n", server_socket);
-        CLOSE_SOCKET(server_socket);
-        printf("\n%i\n", server_socket);
-    }
-
-
+    printf("\n%i\n", server_socket);
     CLOSE_SOCKET(server_socket);
- 
+    printf("\n%i\n", server_socket);
+
     return 1;
 }

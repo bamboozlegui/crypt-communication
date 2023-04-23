@@ -151,29 +151,9 @@ int main(int argc, char* argv[])
 
         // #3 convert send password count
         sprintf(buffer, "%i", pass_count);
-
         send(accept_socket, buffer, strlen(buffer), 0);
 
-
-        printf("Here are your passwords:\n");
-        for (int i = 0; i < pass_count; ++i)
-        {
-            // #4 send passwords
-            generate_pass(pass_length, pass);
-            printf("Generating pass #%i.... %s\n", i + 1, pass);
-            send(accept_socket, pass, pass_length, 0);
-        }
-
-            send(accept_socket, "Max value for password length or count exceeded.", 49, 0);
-            CLOSE_SOCKET(accept_socket);
-        }
-        else
-            send(accept_socket, "Input is valid!", 16, 0);
-
-        //memset(&buffer, 0, BUFF_LENGTH);
-        // convert to int and send password count to the client
-        sprintf(buffer, "%i", pass_count);
-        send(accept_socket, buffer, strlen(buffer), 0);
+        printf("Here are the passwords:\n");
         for (int i = 0; i < pass_count; ++i)
         {
             generate_pass(pass_length, pass);

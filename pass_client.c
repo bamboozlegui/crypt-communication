@@ -1,7 +1,7 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #define socklen_t int
-#define IS_VALID_SOCKET(s) ((s) != (SOCKET_ERROR || INVALID_SOCKET || 0))
+#define IS_VALID_SOCKET(s) ((s) != (SOCKET_ERROR || INVALID_SOCKET))
 #define GET_SOCKET_ERR() (WSAGetLastError())
 #define CLOSE_SOCKET(s) closesocket(s)
 #else
@@ -94,34 +94,35 @@ int main(int argc, char* argv[])
 
     while (IS_VALID_SOCKET(server_socket) > 0)
     {
-        printf("Enter password length and the amount separated by a space (MAX 20 for each value): ");
-        fgets(buffer, 1024, stdin);
-        // #1 send pass count andl length to server
-        send(server_socket, buffer, strlen(buffer), 0);
+    printf("Enter password length and the amount separated by a space (MAX 20 for each value): ");
+    fgets(buffer, 1024, stdin);
+    // #1 send pass count andl length to server
+    send(server_socket, buffer, strlen(buffer), 0);
 
 
-        printf("Checking input validity...\n");
-        // #2 check server response for validity
-        recv(server_socket, buffer, sizeof(buffer), 0);
+    printf("Checking input validity...\n");
+    // #2 check server response for validity
+    recv(server_socket, buffer, sizeof(buffer), 0);
         printf("%s", buffer);
 
-        // #3 get pass count
-        recv(server_socket, buffer, sizeof(buffer), 0);
-        pass_count = atoi(buffer);
+    // #3 get pass count
+    recv(server_socket, buffer, sizeof(buffer), 0);
+    pass_count = atoi(buffer);
 
+    memset(&buffer, 0, 1024);
+    for (int i = 0; i < pass_count; ++i)
+    {
+        // #4 get passwords
+        recv(server_socket, buffer, sizeof(buffer), 0);
+        printf("Pass %i: %s\n", i + 1, buffer);
         memset(&buffer, 0, 1024);
-        for (int i = 0; i < pass_count; ++i)
-        {
-            // #4 get passwords
-            recv(server_socket, buffer, sizeof(buffer), 0);
-            printf("Pass %i: %s\n", i + 1, buffer);
-            memset(&buffer, 0, 1024);
-        }
+    }
         printf("\n%i\n", server_socket);
         CLOSE_SOCKET(server_socket);
         printf("\n%i\n", server_socket);
     }
-    
+
+    CLOSE_SOCKET(server_socket);
  
     return 1;
 }

@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
 
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
+    
     socklen_t client_addr_length = sizeof(struct sockaddr);
-
 
     char buffer[BUFF_LENGTH];
     int pass_count;
@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
     memset(&server_address, 0, sizeof(server_address));
 
     // set protocol, address(to all network interfaces), port
+
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
     server_address.sin_port = htons(port);
@@ -132,7 +133,7 @@ int main(int argc, char* argv[])
         parse_buffer(buffer, &pass_length, &pass_count);
         printf("Parsed length and count: %i and %i\n", pass_length, pass_count);
 
-        if (pass_length > 21 || pass_count > 21)
+        if (pass_length > 20 || pass_count > 20)
         {
             // #2 send info about password validity
             printf("Password arguments are out of bound.\n");
@@ -150,7 +151,9 @@ int main(int argc, char* argv[])
 
         // #3 convert send password count
         sprintf(buffer, "%i", pass_count);
-        send(accept_socket, buffer, 3, 0);
+
+        send(accept_socket, buffer, strlen(buffer), 0);
+
 
         printf("Here are your passwords:\n");
         for (int i = 0; i < pass_count; ++i)
@@ -160,12 +163,32 @@ int main(int argc, char* argv[])
             printf("Generating pass #%i.... %s\n", i + 1, pass);
             send(accept_socket, pass, pass_length, 0);
         }
+
+            send(accept_socket, "Max value for password length or count exceeded.", 49, 0);
+            CLOSE_SOCKET(accept_socket);
+        }
+        else
+            send(accept_socket, "Input is valid!", 16, 0);
+
+        //memset(&buffer, 0, BUFF_LENGTH);
+        // convert to int and send password count to the client
+        sprintf(buffer, "%i", pass_count);
+        send(accept_socket, buffer, strlen(buffer), 0);
+        for (int i = 0; i < pass_count; ++i)
+        {
+            generate_pass(pass_length, pass);
+            printf("Generating pass #%i.... %s\n", i+1, pass);
+            send(accept_socket, pass, pass_length, 0);
+        }
+
         CLOSE_SOCKET(accept_socket);
         printf("Peer disconnected.\n");
     }
 
     return 1;
 }
+
+// function for generating pseudo-random password
 
 char* generate_pass(int n, char* pass)
 {

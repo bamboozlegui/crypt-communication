@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
     int pass_count;
     int pass_length;
     char pass[256];
+    char all_pass[1024];
     srand(time(NULL)); // seed for pseudo-random number generations
 
 
@@ -150,15 +151,27 @@ int main(int argc, char* argv[])
         }
 
         // #3 convert send password count
+        memset(&buffer, 0, 1024);
         sprintf(buffer, "%i", pass_count);
+        printf("%i and %s\n", pass_count, buffer);
         send(accept_socket, buffer, strlen(buffer), 0);
 
+        
         printf("Here are the passwords:\n");
+        memset(&pass, 0, 256);
         for (int i = 0; i < pass_count; ++i)
         {
             generate_pass(pass_length, pass);
             printf("Generating pass #%i.... %s\n", i+1, pass);
-            send(accept_socket, pass, pass_length, 0);
+
+            if (send(accept_socket, pass, strlen(pass)+1, 0) > 0)
+                continue;
+            else
+            {
+                printf("Error while generating passwords.\n");
+                break;
+            }
+
         }
 
         CLOSE_SOCKET(accept_socket);
@@ -172,12 +185,12 @@ int main(int argc, char* argv[])
 
 char* generate_pass(int n, char* pass)
 {
-    char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
+    char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':|,.<>/?`~";
     for (int i = 0; i < n; ++i)
     {
         pass[i] = chars[rand() % (sizeof(chars) - 1)]; // select random character
     }
-    pass[n] = '\0';
+    // pass[n] = '\0'; finally found the issue - this breaks output when sending to client for some reason
 
     return pass;
 }

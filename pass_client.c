@@ -102,25 +102,33 @@ int main(int argc, char* argv[])
     // #2 check server response for validity
     recv(server_socket, buffer, sizeof(buffer), 0);
 
-        printf("%s", buffer);
+    printf("%s", buffer);
 
 
     // #3 get pass count
     recv(server_socket, buffer, sizeof(buffer), 0);
     pass_count = atoi(buffer);
-
+    
     memset(&buffer, 0, 1024);
+    printf("%i\n", pass_count);
+    
     for (int i = 0; i < pass_count; ++i)
     {
         // #4 get passwords
-        recv(server_socket, buffer, sizeof(buffer), 0);
-        printf("Pass %i: %s\n", i + 1, buffer);
-        memset(&buffer, 0, 1024);
+        int r = recv(server_socket, buffer, sizeof(buffer), 0);
+        if (r >= 0)
+        {
+            printf("Pass %i: %s\n", i + 1, buffer);
+            memset(&buffer, 0, 1024);
+        }
+        else
+        {
+            printf("Error while generating passwords: %s\n", strerror(errno));
+            break;
+        }
     }
 
-    printf("\n%i\n", server_socket);
     CLOSE_SOCKET(server_socket);
-    printf("\n%i\n", server_socket);
 
     return 1;
 }

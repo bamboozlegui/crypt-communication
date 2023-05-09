@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
         {
             generate_pass(pass_length, pass);
             printf("Generating pass #%i.... %s\n", i+1, pass);
-
+            usleep(1000000);
             if (send(accept_socket, pass, strlen(pass)+1, 0) > 0)
                 continue;
             else
@@ -190,7 +190,7 @@ char* generate_pass(int n, char* pass)
     {
         pass[i] = chars[rand() % (sizeof(chars) - 1)]; // select random character
     }
-    // pass[n] = '\0'; finally found the issue - this breaks output when sending to client for some reason
+     pass[n] = '\0'; //finally found the issue - this breaks output when sending to client for some reason
 
     return pass;
 }
